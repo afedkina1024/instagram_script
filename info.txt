@@ -254,3 +254,7 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
+
+composer require mgp25/instagram-php
+composer require raiym/instagram-php-scraper
+composer require symfony/process
