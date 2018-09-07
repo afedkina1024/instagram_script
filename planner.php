@@ -8,21 +8,22 @@ use Symfony\Component\Process\Process;
 require_once ("config.php");
 
 /////// CONFIG ///////
-$json_string = 'https://api.myip.com';
+$json_string = 'http://instagram/public/api/task';
 $jsondata = file_get_contents($json_string);
 $json_array = json_decode($jsondata,true);
-$ip=$json_array["ip"];
-echo "IP address: $ip";
-$task_id=1;
-$insta_login="ricatino86";
-$insta_password="S2HAtiEnnw";
+var_dump($json_array);
+//$ip=$json_array["ip"];
+//echo "IP address: $ip";
+$task_id=$json_array["id"];
+$insta_login=$json_array["instAccountLogin"];
+$insta_password=$json_array["instAccountPassword"];
 $proxy="user3249:jV0m2DJq@185.220.35.7:33249";
-$resourceAmount=100;
-$searchType="hashtag";
-$actionType="like";
-$data="zara, rose, flower";
-$message="";
-$status="new";
+$resourceAmount=$json_array["resourceAmount"];
+$searchType=$json_array["searchType"];
+$actionType=$json_array["actionType"];
+$data=$json_array["data"];
+$message=$json_array["message"];
+$status=$json_array["status"];
 $host = DbHost;
 $dbName = DbName; 
 $login = DbUserName; 
@@ -34,11 +35,11 @@ $result=mysqli_query($connect, $sql);
 echo "$sql $result";
 //mysqli_free_result ($result);
 $connect -> close();
-/*$command =  'php exchange.php' . ' > NUL 2>&1 & echo $!; ';
+//$command =  'php exchange.php' . ' > NUL 2>&1 & echo $!; ';
 
-$pid = exec($command, $output);
+//$pid = exec($command, $output);
 
-var_dump($pid);*/
+//var_dump($pid);
 
 $process = new Process('php exchange.php');
 $process->start();
@@ -52,7 +53,11 @@ var_dump ($process->getOutput());
 $process2 = new Process('php exchange.php');
 $process2->start();
 var_dump($process2->getPid());
+while ($process->isRunning()) {
+    // waiting for process to finish
+}
 
+var_dump ($process->getOutput());
 /*function execInBackground($cmd) {
 pclose(popen("start /B ". $cmd, "r"));
 }
