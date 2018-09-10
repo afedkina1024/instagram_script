@@ -236,6 +236,7 @@ echo sizeof($media_id_array)."\n";
           curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
           $response = curl_exec($ch);
           var_dump ($response);
+          sleep(100);
         }
           curl_close($ch);
           

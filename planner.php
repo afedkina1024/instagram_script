@@ -8,16 +8,21 @@ use Symfony\Component\Process\Process;
 require_once ("config.php");
 
 /////// CONFIG ///////
-$json_string = 'http://instagram/public/api/task';
+while (1)
+{
+$json_string = 'http://instagram/api/task';
+
 $jsondata = file_get_contents($json_string);
 $json_array = json_decode($jsondata,true);
 var_dump($json_array);
 //$ip=$json_array["ip"];
 //echo "IP address: $ip";
+if ($json_array)
+{
 $task_id=$json_array["id"];
 $insta_login=$json_array["instAccountLogin"];
 $insta_password=$json_array["instAccountPassword"];
-$proxy="user3249:jV0m2DJq@185.220.35.7:33249";
+$proxy=$json_array["proxyStr"];
 $resourceAmount=$json_array["resourceAmount"];
 $searchType=$json_array["searchType"];
 $actionType=$json_array["actionType"];
@@ -29,7 +34,7 @@ $dbName = DbName;
 $login = DbUserName; 
 $pwd = DbUserPwd;
 $connect = mysqli_connect ($host, $login, $pwd, $dbName);
-//var_dump($connect);
+var_dump($connect);
 $sql="Insert into task_queue (task_id, login, password, proxy, resourceAmount, searchType, 	actionType, data, message, status) values ('$task_id', '$insta_login', '$insta_password', '$proxy', '$resourceAmount', '$searchType', '$actionType', '$data', '$message', '$status')";
 $result=mysqli_query($connect, $sql);
 echo "$sql $result";
@@ -42,6 +47,8 @@ $connect -> close();
 //var_dump($pid);
 
 $process = new Process('php exchange.php');
+
+
 $process->start();
 var_dump($process->getPid());
 while ($process->isRunning()) {
@@ -49,7 +56,10 @@ while ($process->isRunning()) {
 }
 
 var_dump ($process->getOutput());
-
+}
+sleep (60);
+}
+/*
 $process2 = new Process('php exchange.php');
 $process2->start();
 var_dump($process2->getPid());
@@ -57,7 +67,7 @@ while ($process->isRunning()) {
     // waiting for process to finish
 }
 
-var_dump ($process->getOutput());
+var_dump ($process->getOutput());*/
 /*function execInBackground($cmd) {
 pclose(popen("start /B ". $cmd, "r"));
 }
