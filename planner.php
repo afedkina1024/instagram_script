@@ -11,7 +11,7 @@ require_once ("config.php");
 while (1)
 {
 $json_string = 'http://instagram/api/task';
-
+//$json_string = 'http://instagram/public/api/task';
 $jsondata = file_get_contents($json_string);
 $json_array = json_decode($jsondata,true);
 var_dump($json_array);
@@ -51,27 +51,13 @@ $process = new Process('php exchange.php');
 
 $process->start();
 var_dump($process->getPid());
-while ($process->isRunning()) {
+/*while ($process->isRunning()) {
     // waiting for process to finish
-}
+}*/
 
 var_dump ($process->getOutput());
 }
 sleep (60);
 }
-/*
-$process2 = new Process('php exchange.php');
-$process2->start();
-var_dump($process2->getPid());
-while ($process->isRunning()) {
-    // waiting for process to finish
-}
 
-var_dump ($process->getOutput());*/
-/*function execInBackground($cmd) {
-pclose(popen("start /B ". $cmd, "r"));
-}
-execInBackground('start cmd.exe @cmd /k "php exchange.php"');*/
-//system("cmd /C  exchange.bat");
-//system("cmd /C  exchange.bat");
 ?>

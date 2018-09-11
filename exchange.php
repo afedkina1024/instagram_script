@@ -28,8 +28,11 @@ $actionType = $row['actionType'];
 $data = $row['data'];
 $message = $row['message'];
 $status = $row['status'];         
-            mysqli_free_result ($result);
-        }
+mysqli_free_result ($result);
+$sql = "Update task_queue Set status='in_progress' WHERE task_id='$task_id'";
+$result=mysqli_query($connect, $sql);
+echo "$sql $result\n";
+}
 $to_trim = array("[", "]", "\"");
 $data=str_replace($to_trim, '', $data);
 $data_r= explode (",", $data);
@@ -138,15 +141,25 @@ if (sizeof($medias)>=$limit) break;
 
 echo ("$actionType $searchType $data_1");
 if ($actionType=="like"){
-if ($searchType=="hashtag"){
+  if ($searchType=="hashtag"){
 
 // select posts by hashtag
 $result = $instagram->getPaginateMediasByTag($data_1);
 $medias = $result['medias'];
-$media = $medias[0];
-echo "Id: {$media->getId()}\n";
-
+//$media = $medias[0];
+//echo "Id: {$media->getId()}\n";
 echo sizeof($medias)."\n";
+if (sizeof($medias)==0)
+{
+$array = [
+          'status'=>'error',
+          'message'=>"Cannot find posts for hashtag: $data_1"
+    ];
+  curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
+          curl_exec($ch);
+}
+else
+{
 do{
 	echo sizeof($medias)."\n";
 	if (sizeof($medias)>=$limit) break;
@@ -155,6 +168,8 @@ do{
 	echo "Id: {$media->getId()}\n";
 
 } while ($result['hasNextPage'] === true);
+}
+
 }
 //Search posts by username
 
@@ -216,6 +231,7 @@ $array = [
 
 
 }
+
 for ($i=0; $i<$limit; $i++)
 	{
 		$media_id_array[]=$medias[$i]->getId();
@@ -236,11 +252,23 @@ echo sizeof($media_id_array)."\n";
           curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
           $response = curl_exec($ch);
           var_dump ($response);
-          sleep(100);
+          //sleep(100);
         }
-          curl_close($ch);
           
-
+          if (sizeof($media_id_array)<$limit)
+          {
+                      $array = [
+          'status'=>'error',
+          'message'=>"Cannot find more than ". sizeof($media_id_array)."posts for: $data_1"
+          ];
+          curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
+          $response = curl_exec($ch);
+          var_dump ($response);
+          }
+curl_close($ch);
+$sql = "Update task_queue Set status='completed' WHERE task_id='$task_id'";
+$result=mysqli_query($connect, $sql);
+echo "$sql $result\n";
 
 /*$ch = curl_init('http://sample.com/data.php');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
