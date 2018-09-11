@@ -84,7 +84,7 @@ if (!empty($proxy)){
       }
       catch (NetworkException $e) {
       echo "Cannot connect to proxy $proxy: ".$e->getMessage()."\n";
-                            $array = [
+      $array = [
           'status'=>'error',
           'message'=>"Cannot connect to proxy $proxy: ".$e->getMessage()
           ];
@@ -110,6 +110,12 @@ if (!empty($proxy)){
     }
 } catch (\Exception $e) {
     echo 'Something went wrong: '.$e->getMessage()."\n";
+          $array = [
+          'status'=>'error',
+          'message'=>"Cannot login to the account $username: ".$e->getMessage()
+          ];
+          curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
+          $response = curl_exec($ch);
 }
 */
  
@@ -279,8 +285,30 @@ echo sizeof($media_id_array)."\n";
 }
 
 //Формируем JSON
+try {
+    $loginResponse = $ig->login($username, $password);
+    if ($loginResponse !== null && $loginResponse->isTwoFactorRequired()) {
+        $twoFactorIdentifier = $loginResponse->getTwoFactorInfo()->getTwoFactorIdentifier();
+        // The verification code will be sent by Instagram via SMS.
+        $verificationCode = trim(fgets(STDIN));
+        $ig->finishTwoFactorLogin($username, $password, $twoFactorIdentifier, $verificationCode);
+    }
+} catch (\Exception $e) {
+    echo 'Something went wrong: '.$e->getMessage()."\n";
+          $array = [
+          'status'=>'error',
+          'message'=>"Cannot login to the account $username: ".$e->getMessage()
+          ];
+          curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
+          $response = curl_exec($ch);
+}
 
-
+try {
+ $current_user=$ig->people->getSelfInfo();  
+} catch (\Exception $e) {
+   //continue
+}
+if (!empty($current_user)){
           foreach ($media_id_array as $media){
           $array = [
 					'status'=>'success',
@@ -289,7 +317,7 @@ echo sizeof($media_id_array)."\n";
           curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
           $response = curl_exec($ch);
           var_dump ($response);
-          //sleep(100);
+          sleep(100);
         }
           
           if (sizeof($media_id_array)<$limit)
@@ -301,6 +329,7 @@ echo sizeof($media_id_array)."\n";
           curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
           $response = curl_exec($ch);
           var_dump ($response);
+          }
           }
 curl_close($ch);
 $sql = "Update task_queue Set status='completed' WHERE task_id='$task_id'";
