@@ -4,7 +4,17 @@ date_default_timezone_set('UTC');
 require __DIR__.'/vendor/autoload.php';
 require_once ("config.php");
 use InstagramAPI\InstagramID;
-
+use InstagramAPI\Exception\NetworkException;
+class R extends \InstagramAPI\Response {
+    public function isOk() {
+        return true;
+    }
+}
+$reps = new R();
+$url_check = 'https://api.myip.com';
+$debug = true;
+$truncatedDebug = false;
+$ig = new \InstagramAPI\Instagram($debug, $truncatedDebug);
 $host = DbHost;
 $dbName = DbName; 
 $login = DbUserName; 
@@ -29,9 +39,9 @@ $data = $row['data'];
 $message = $row['message'];
 $status = $row['status'];         
 mysqli_free_result ($result);
-$sql = "Update task_queue Set status='in_progress' WHERE task_id='$task_id'";
-$result=mysqli_query($connect, $sql);
-echo "$sql $result\n";
+//$sql = "Update task_queue Set status='in_progress' WHERE task_id='$task_id'";
+//$result=mysqli_query($connect, $sql);
+//echo "$sql $result\n";
 }
 $to_trim = array("[", "]", "\"");
 $data=str_replace($to_trim, '', $data);
@@ -40,18 +50,13 @@ $data_1=trim($data_r[0]);
 
 
 var_dump($data_1);
-$connect -> close();
 
-$debug = true;
-$truncatedDebug = false;
+
+
 $users_visited=[];
 $medias=[];
 $instagram = new \InstagramScraper\Instagram();
-$ig = new \InstagramAPI\Instagram($debug, $truncatedDebug);
-$ig->setProxy($proxy);
-
 $proxy_r = explode("@", $proxy);
-
 $proxy_userpwd = explode(":", $proxy_r[0]);
 $proxy_user=$proxy_userpwd[0];
 $proxy_pass=$proxy_userpwd[1];
@@ -67,6 +72,33 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_POST, true);
 
+if (!empty($proxy)){
+     var_dump('Connecting to proxy:' , $proxy);
+      //$ig = new \InstagramAPI\Instagram($debug, $truncatedDebug);
+      $ig->settings->setActiveUser($username);
+      
+      try{
+      $ig->setProxy($proxy);
+     $res = $ig->request($url_check)->setNeedsAuth(false)->getResponse($reps);
+ 
+      }
+      catch (NetworkException $e) {
+      echo "Cannot connect to proxy $proxy: ".$e->getMessage()."\n";
+                            $array = [
+          'status'=>'error',
+          'message'=>"Cannot connect to proxy $proxy: ".$e->getMessage()
+          ];
+          curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
+          $response = curl_exec($ch);
+          var_dump ($response);
+}
+}
+     
+
+
+
+
+
 //Открытие сеанса пользователя
 /*try {
     $loginResponse = $ig->login($username, $password);
@@ -80,7 +112,9 @@ curl_setopt($ch, CURLOPT_POST, true);
     echo 'Something went wrong: '.$e->getMessage()."\n";
 }
 */
-$instagram->setProxy([
+ 
+
+$setProxy=$instagram->setProxy([
     'address' => $proxy_ip,
     'port'    => $proxy_port,
     'tunnel'  => true,
@@ -91,6 +125,9 @@ $instagram->setProxy([
                 'method' => CURLAUTH_BASIC
             ],
               ]);
+
+
+
 //$instagram = $instagram->withCredentials($username, $password, 'cache_folder/'.$username);
 //$instagram->login();
 //$medias = $instagram->getMediasByTag('youneverknow', 2);
@@ -269,7 +306,7 @@ curl_close($ch);
 $sql = "Update task_queue Set status='completed' WHERE task_id='$task_id'";
 $result=mysqli_query($connect, $sql);
 echo "$sql $result\n";
-
+$connect -> close();
 /*$ch = curl_init('http://sample.com/data.php');
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
