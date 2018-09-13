@@ -10,25 +10,30 @@ class R extends \InstagramAPI\Response {
         return true;
     }
 }
+
+
+
 $reps = new R();
 $url_check = 'https://api.myip.com';
 $debug = true;
 $truncatedDebug = false;
 $ig = new \InstagramAPI\Instagram($debug, $truncatedDebug);
-$host = DbHost;
-$dbName = DbName; 
-$login = DbUserName; 
-$pwd = DbUserPwd;
+$host = DB_HOST;
+$dbName = DB_NAME; 
+$login = DB_USERNAME; 
+$pwd = DB_USERPWD;
+
 $connect = mysqli_connect ($host, $login, $pwd, $dbName);
-//var_dump($connect);
+
 $sql="Select * from task_queue where status='new' order by task_id desc limit 1";
 $result=mysqli_query($connect, $sql);
 
 if ($result = mysqli_query($connect, $sql)){
         
-            $row = mysqli_fetch_array ($result);
-            var_dump($row);
+  $row = mysqli_fetch_array ($result);
+var_dump($row);
 $task_id = $row['task_id'];
+$instAccountId = $row['instAccountId'];
 $username = $row['login'];
 $password = $row['password'];
 $proxy = $row['proxy'];
@@ -37,18 +42,17 @@ $searchType = $row['searchType'];
 $actionType = $row['actionType'];
 $data = $row['data'];
 $message = $row['message'];
+$dateUpdate = $row['dateUpdate'];
 $status = $row['status'];         
 mysqli_free_result ($result);
-//$sql = "Update task_queue Set status='in_progress' WHERE task_id='$task_id'";
-//$result=mysqli_query($connect, $sql);
-//echo "$sql $result\n";
+$sql = "Update task_queue Set status='in_progress' WHERE task_id='$task_id'";
+$result=mysqli_query($connect, $sql);
+echo "$sql $result\n";
 }
 $to_trim = array("[", "]", "\"");
 $data=str_replace($to_trim, '', $data);
 $data_r= explode (",", $data);
 $data_1=trim($data_r[0]);
-
-
 var_dump($data_1);
 
 
@@ -65,7 +69,7 @@ $proxy_ip=$proxy_ip_port[0];
 $proxy_port=$proxy_ip_port[1];
 
 //Настраиваем cURL
-$url = "http://instagram/api/account/$task_id";
+$url = "http://138.201.34.111:81/api/account/$task_id";
 echo $url;
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -132,7 +136,43 @@ $setProxy=$instagram->setProxy([
             ],
               ]);
 
+if($dateUpdate + CHECK_PARAMETRS_ACCOUNT < time() || empty($dateUpdate) )
+{
 
+  $account = $instagram->getAccount($username);
+// Available fields
+echo "Account info:\n";
+echo "Id: {$account->getId()}\n";
+echo "Username: {$account->getUsername()}\n";
+echo "Full name: {$account->getFullName()}\n";
+echo "Biography: {$account->getBiography()}\n";
+echo "Profile picture url: {$account->getProfilePicUrl()}\n";
+echo "External link: {$account->getExternalUrl()}\n";
+echo "Number of published posts: {$account->getMediaCount()}\n";
+echo "Number of followings: {$account->getFollowsCount()}\n";
+echo "Number of followers: {$account->getFollowedByCount()}\n";
+echo "Is private: {$account->isPrivate()}\n";
+echo "Is verified: {$account->isVerified()}\n";
+
+$array = [
+  "followings"=>$account->getFollowsCount(), 
+  "followers"=>$account->getFollowedByCount(),
+  "post"=>$account->getMediaCount(),
+
+    ];
+var_dump($array);
+
+$url_account = "http://138.201.34.111:81/api/account/statment/$instAccountId";
+echo $url_account;
+$ch_account = curl_init($url_account);
+curl_setopt($ch_account, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch_account, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch_account, CURLOPT_POST, true);
+curl_setopt($ch_account, CURLOPT_POSTFIELDS,http_build_query($array));
+  $response = curl_exec($ch_account);
+var_dump ($response);
+curl_close($ch_account);
+}
 
 //$instagram = $instagram->withCredentials($username, $password, 'cache_folder/'.$username);
 //$instagram->login();
@@ -199,7 +239,7 @@ $array = [
           'message'=>"Cannot find posts for hashtag: $data_1"
     ];
   curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
-          curl_exec($ch);
+  curl_exec($ch);
 }
 else
 {
@@ -223,7 +263,8 @@ $userId = $data_1;
 $userId_response = $ig->people->getInfoById($userId);
 var_dump ($userId_response);
 if (!$userId_response)
-	{	$array = [
+	{	
+    $array = [
 					'status'=>'error',
 					'message'=>"Invalid user ID: $userId"
     ];
@@ -267,7 +308,7 @@ $medias_count=sizeof($medias);
 echo"Medias by location $medias_count";
 $array = [
 					'status'=>'error',
-					'message'=>"Cannot find posts for user ID: $userId - $user"
+					'message'=>"Cannot find posts for location: $location_id"
     ];
   curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
   $response = curl_exec($ch);
@@ -285,7 +326,9 @@ echo sizeof($media_id_array)."\n";
 }
 
 //Формируем JSON
-try {
+
+//Открытие сеанса пользователя
+/*try {
     $loginResponse = $ig->login($username, $password);
     if ($loginResponse !== null && $loginResponse->isTwoFactorRequired()) {
         $twoFactorIdentifier = $loginResponse->getTwoFactorInfo()->getTwoFactorIdentifier();
@@ -301,14 +344,16 @@ try {
           ];
           curl_setopt($ch, CURLOPT_POSTFIELDS,http_build_query($array));
           $response = curl_exec($ch);
+var_dump ($response);
+
 }
 
 try {
  $current_user=$ig->people->getSelfInfo();  
 } catch (\Exception $e) {
    //continue
-}
-if (!empty($current_user)){
+}*/
+//if (!empty($current_user)){
           foreach ($media_id_array as $media){
           $array = [
 					'status'=>'success',
@@ -330,7 +375,7 @@ if (!empty($current_user)){
           $response = curl_exec($ch);
           var_dump ($response);
           }
-          }
+//          }
 curl_close($ch);
 $sql = "Update task_queue Set status='completed' WHERE task_id='$task_id'";
 $result=mysqli_query($connect, $sql);

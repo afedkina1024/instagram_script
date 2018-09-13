@@ -1,63 +1,55 @@
 <?php
-
-
 set_time_limit(0);
 date_default_timezone_set('UTC');
 require __DIR__.'/vendor/autoload.php';
 use Symfony\Component\Process\Process;
 require_once ("config.php");
 
-/////// CONFIG ///////
+/////// FUNCTION DECLARATION ///////
+function getNewTask($json_string)
+{
+	$result = 0;
+	$jsondata = file_get_contents($json_string);
+	$json_array = json_decode($jsondata,true);
+	var_dump($json_array);
+	if (!empty($json_array))
+	{
+		$task_id = $json_array["id"];
+		$instAccountId = $json_array["instAccountId"];
+		$insta_login = $json_array["instAccountLogin"];
+		$insta_password = $json_array["instAccountPassword"];
+		$proxy = $json_array["proxyStr"];
+		$resourceAmount = $json_array["resourceAmount"];
+		$searchType = $json_array["searchType"];
+		$actionType = $json_array["actionType"];
+		$data = $json_array["data"];
+		$message = $json_array["message"];
+		$dateUpdate = $json_array["dateUpdateAccountParametrs"];
+		$status = $json_array["status"];
+		$host = DB_HOST;
+		$dbName = DB_NAME; 
+		$login = DB_USERNAME; 
+		$pwd = DB_USERPWD;
+		$connect = mysqli_connect ($host, $login, $pwd, $dbName);
+		$sql = "Insert into task_queue (task_id, instAccountId, login, password, proxy, resourceAmount, searchType, 	actionType, data, message, dateUpdate, status) values ('$task_id', '$instAccountId', '$insta_login', '$insta_password', '$proxy', '$resourceAmount', '$searchType', '$actionType', '$data', '$message', '$dateUpdate', '$status')";
+		$result = mysqli_query($connect, $sql);
+		echo "$sql , Result: $result\n";
+		$connect -> close();
+	}
+	return $result;
+}
+/////// MAIN SECTION ///////
 while (1)
 {
-$json_string = 'http://instagram/api/task';
-//$json_string = 'http://instagram/public/api/task';
-$jsondata = file_get_contents($json_string);
-$json_array = json_decode($jsondata,true);
-var_dump($json_array);
-//$ip=$json_array["ip"];
-//echo "IP address: $ip";
-if ($json_array)
-{
-$task_id=$json_array["id"];
-$insta_login=$json_array["instAccountLogin"];
-$insta_password=$json_array["instAccountPassword"];
-$proxy=$json_array["proxyStr"];
-$resourceAmount=$json_array["resourceAmount"];
-$searchType=$json_array["searchType"];
-$actionType=$json_array["actionType"];
-$data=$json_array["data"];
-$message=$json_array["message"];
-$status=$json_array["status"];
-$host = DbHost;
-$dbName = DbName; 
-$login = DbUserName; 
-$pwd = DbUserPwd;
-$connect = mysqli_connect ($host, $login, $pwd, $dbName);
-var_dump($connect);
-$sql="Insert into task_queue (task_id, login, password, proxy, resourceAmount, searchType, 	actionType, data, message, status) values ('$task_id', '$insta_login', '$insta_password', '$proxy', '$resourceAmount', '$searchType', '$actionType', '$data', '$message', '$status')";
-$result=mysqli_query($connect, $sql);
-echo "$sql $result";
-//mysqli_free_result ($result);
-$connect -> close();
-//$command =  'php exchange.php' . ' > NUL 2>&1 & echo $!; ';
-
-//$pid = exec($command, $output);
-
-//var_dump($pid);
-
-$process = new Process('php exchange.php');
-
-
-$process->start();
-var_dump($process->getPid());
-/*while ($process->isRunning()) {
-    // waiting for process to finish
-}*/
-
-var_dump ($process->getOutput());
-}
-sleep (60);
+	$json_string = 'http://138.201.34.111:81/api/task';
+	
+	if (getNewTask($json_string)==1)
+	{
+		$process = new Process('php exchange.php');
+		$process->start();
+		var_dump($process->getPid());
+	}
+	sleep (60);
 }
 
 ?>
