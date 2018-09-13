@@ -1,3 +1,7 @@
+cd /c/OSPanelNew/domains/instagram/instagram_script
+$ git commit -a --allow-empty-message -m ''
+
+
 Li@DESKTOP-L6I9953 MINGW64 ~
 $ mkdir GIT
 
@@ -254,6 +258,7 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
+> > php bin\console doctrine:mig:mig - Выполнить миграцию БД
 
 composer require mgp25/instagram-php
 composer require raiym/instagram-php-scraper
